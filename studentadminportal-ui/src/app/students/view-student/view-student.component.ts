@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { UntypedFormBuilder } from '@angular/forms';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { NgForm, UntypedFormBuilder } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Gender } from 'src/app/models/ui-models/gender.model';
@@ -27,22 +27,22 @@ export class ViewStudentComponent implements OnInit {
     mobile:0,
     genderId:'',
     profileImageUrl:'',
-
     gender:{
       id: '',
       description:''
     },
-
     address:{
       id: '',
       physicalAddress: '',
       postalAddress:''
     }
+  };
 
-
-  }
-
+  isNewStudent = false;
+  header = '';
   genderList: Gender[] = [];
+
+  @ViewChild('studentDetailsForm') studentDetailsForm?: NgForm;
 
   constructor(private readonly studentService: StudentService,
     private readonly route: ActivatedRoute,
@@ -56,28 +56,34 @@ export class ViewStudentComponent implements OnInit {
         this.studentId = params.get('id');
 
         if (this.studentId){
-          this.studentService.getStudent(this.studentId)
-          .subscribe(
-            (successResponse) => {
-              this.student = successResponse;
-            }
-          );
+
+          if(this.studentId.toLowerCase()  ==='Add'.toLowerCase()) {
+            this.isNewStudent =true;
+            this.header = 'Add New Student';
+          }
+          else{
+            this.isNewStudent =false;
+            this.header = 'Edit Student';
+
+            this.studentService.getStudent(this.studentId)
+            .subscribe(
+              (successResponse) => {
+                this.student = successResponse;
+              }
+            );
+          }
+
+
 
         this.genderService.getGenderList()
         .subscribe(
           (successResponse) => {
             this.genderList = successResponse;
           }
-        )
-
+        );
         }
-
-
       }
     );
-
-
-
   }
 
   onUpdate(): void{
@@ -125,6 +131,27 @@ export class ViewStudentComponent implements OnInit {
       (errorResponse) => {
       }
     )
+  }
+
+  onAdd(): void {
+    this.studentService.addStudent(this.student)
+    .subscribe(
+      (successResponse) => {
+        this.snackbar.open('Student added successfully', undefined,{
+          duration : 2000
+        });
+
+        setTimeout(() => {
+          this.router.navigateByUrl('students/${successResponse.id}');
+        },2000);
+
+      },
+
+      (errorResponse) => {
+
+      }
+
+    );
   }
 
 }
